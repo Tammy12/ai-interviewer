@@ -11,6 +11,6 @@ import java.util.List;
 public class MockInterviewDto {
     private Integer id;
     private String jobDescription;
-    private List<String> messages;
+//    private List<MessageDto> messages; // question: should this be included??
     private Stage stage;
 }

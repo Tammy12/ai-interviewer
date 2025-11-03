@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres
+    restart: always
+    ports:
+      - 5433:5432
+    environment:
+      - POSTGRES_USER=dev
+      - POSTGRES_PASSWORD=dev
+      - POSTGRES_DB=ai_interviewer
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8090:8080

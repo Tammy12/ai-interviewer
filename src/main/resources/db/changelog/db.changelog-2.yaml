@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-mock-interview
+      author: tammy-xu
+      changes:
+        - createTable:
+            tableName: mock_interview
+            columns:
+              - column:
+                  name: id
+                  type: INTEGER
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: mock_interview_pkey
+              - column:
+                  name: resume_id
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_mock_interview_resume
+                    deleteCascade: true
+                    referencedTableName: resume
+                    referencedColumnNames: id
+              - column:
+                  name: job_description
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: stage
+                  type: VARCHAR
+                  constraints:
+                    nullable: false

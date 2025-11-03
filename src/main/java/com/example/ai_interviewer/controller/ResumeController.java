@@ -39,11 +39,11 @@ public class ResumeController {
 
         ResumeDto resume = ResumeDto.builder()
                 .id(1)
-                .name(file.getOriginalFilename())
+                .fileName(file.getOriginalFilename())
                 .build();
 
         // question: why can't i return the dto?
-        return new ResponseEntity<>(resume.getName(), HttpStatus.OK);
+        return new ResponseEntity<>(resume.getFileName(), HttpStatus.OK);
     }
 
     @GetMapping("/resumes")
@@ -55,7 +55,7 @@ public class ResumeController {
         for (String name : fileNames) {
             ResumeDto resume = ResumeDto.builder()
                     .id(1)
-                    .name(name)
+                    .fileName(name)
                     .build();
             resumes.add(resume);
         }

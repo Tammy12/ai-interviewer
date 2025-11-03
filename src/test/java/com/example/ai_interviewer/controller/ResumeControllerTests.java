@@ -48,7 +48,7 @@ public class ResumeControllerTests {
         // arrange
         ResumeDto resume = ResumeDto.builder()
                 .id(1)
-                .name("test-scp.txt")
+                .fileName("test-scp.txt")
                 .build();
 
         // act
