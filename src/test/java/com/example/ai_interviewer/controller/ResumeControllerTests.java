@@ -4,13 +4,16 @@ import com.example.ai_interviewer.dto.MessageDto;
 import com.example.ai_interviewer.dto.MockInterviewDto;
 import com.example.ai_interviewer.dto.ResumeDto;
 import com.example.ai_interviewer.model.Stage;
+import com.example.ai_interviewer.service.ResumeService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -18,17 +21,26 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ResumeControllerTests {
     @Autowired
     private TestRestTemplate testRestTemplate;
+    @MockitoBean
+    private ResumeService resumeService;
 
     @Test
     public void testCreateResume() {
         // arrange
+        ResumeDto dto = ResumeDto.builder()
+                .fileName("test-file.txt")
+                .build();
+        ResumeDto expected = dto.toBuilder().id(5).build();
+//        when(resumeService.createResume(MultipartFile.)).thenReturn(expected);
+
         LinkedMultiValueMap<String, Object> parameters = new LinkedMultiValueMap<>();
-        parameters.add("file", new org.springframework.core.io.ClassPathResource("test-file.txt"));
+        parameters.add("file", new org.springframework.core.io.ClassPathResource(expected.getFileName()));
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -36,7 +48,7 @@ public class ResumeControllerTests {
         HttpEntity<LinkedMultiValueMap<String, Object>> entity = new HttpEntity<>(parameters, headers);
 
         // act
-        ResponseEntity<String> response = testRestTemplate.exchange("/resumes", HttpMethod.POST, entity, String.class);
+        ResponseEntity<ResumeDto> response = testRestTemplate.exchange("/resumes", HttpMethod.POST, entity, ResumeDto.class);
 
         // assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);

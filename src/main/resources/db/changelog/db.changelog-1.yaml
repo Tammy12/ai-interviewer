@@ -19,8 +19,8 @@ databaseChangeLog:
                   type: VARCHAR
                   constraints:
                     nullable: false
-              - column:
-                  name: url
-                  type: VARCHAR
-                  constraints:
-                    nullable: false
+#              - column:
+#                  name: data
+#                  type: BYTEA
+#                  constraints:
+#                    nullable: false

@@ -12,3 +12,6 @@ spring:
     password: dev
   liquibase:
     change-log: db/changelog/db.changelog-master.yaml
+aws:
+  s3:
+    bucketName: ai-interviewer-bucket-8512-6856-6386

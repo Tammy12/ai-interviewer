@@ -3,7 +3,11 @@ package com.example.ai_interviewer.controller;
 import com.example.ai_interviewer.dto.MessageDto;
 import com.example.ai_interviewer.dto.MockInterviewDto;
 import com.example.ai_interviewer.dto.ResumeDto;
+import com.example.ai_interviewer.exception.S3UploadException;
 import com.example.ai_interviewer.model.Stage;
+import com.example.ai_interviewer.service.FileService;
+import com.example.ai_interviewer.service.ResumeService;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
@@ -15,79 +19,58 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @Slf4j
+@AllArgsConstructor
 public class ResumeController {
 
+    private ResumeService resumeService;
+
     @PostMapping("/resumes")
-    public ResponseEntity<String> createResume(@RequestParam("file") MultipartFile file) {
-        String filePath = System.getProperty("user.dir") + "/Uploads" + File.separator + file.getOriginalFilename();
-
+    public ResponseEntity<ResumeDto> createResume(@RequestParam("file") MultipartFile file) {
         try {
-            FileOutputStream fout = new FileOutputStream(filePath);
-            fout.write(file.getBytes());
-            fout.close();
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error in uploading file", e);
+            ResumeDto resume = resumeService.createResume(file);
+            if (!file.getContentType().equals("application/pdf")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only PDF files are allowed.");
+            }
+            return new ResponseEntity<>(resume, HttpStatus.OK);
+        } catch (S3UploadException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error uploading file.");
         }
-
-        ResumeDto resume = ResumeDto.builder()
-                .id(1)
-                .fileName(file.getOriginalFilename())
-                .build();
-
-        // question: why can't i return the dto?
-        return new ResponseEntity<>(resume.getFileName(), HttpStatus.OK);
     }
 
     @GetMapping("/resumes")
-    public ResponseEntity<List<ResumeDto>> getAllResumes() {
-        String folderPath = System.getProperty("user.dir") + "/Uploads";
-        File directory = new File(folderPath);
-        String[] fileNames = directory.list();
-        List<ResumeDto> resumes = new ArrayList<>();
-        for (String name : fileNames) {
-            ResumeDto resume = ResumeDto.builder()
-                    .id(1)
-                    .fileName(name)
-                    .build();
-            resumes.add(resume);
-        }
-        return new ResponseEntity<>(resumes, HttpStatus.OK);
+    public ResponseEntity<List<ResumeDto>> getResumeList() {
+        List<ResumeDto> allResumes = resumeService.getAllResumes();
+        return new ResponseEntity<>(allResumes, HttpStatus.OK);
     }
 
     @GetMapping("/resumes/{resumeId}")
-    public ResponseEntity getResume(@PathVariable String resumeId) {
-        String fileUploadPath = System.getProperty("user.dir") + "/Uploads";
-        File directory = new File(fileUploadPath);
-        String[] fileNames = directory.list();
-        boolean contains = Arrays.asList(fileNames).contains(resumeId);
-        if (!contains) {
-            return new ResponseEntity<>("File not found", HttpStatus.NOT_FOUND);
+    @ResponseBody
+    public ResponseEntity<InputStreamResource> getResume(@PathVariable Integer resumeId) {
+        MediaType contentType = MediaType.APPLICATION_PDF;
+        Optional<byte[]> dataContainer = resumeService.getResume(resumeId);
+        if (dataContainer.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found");
         }
-
-        String filePath = fileUploadPath + File.separator + resumeId;
-
-        File file = new File(filePath);
-        InputStreamResource resource = new InputStreamResource(new FileSystemResource(file));
-        HttpHeaders headers = new HttpHeaders();
-        String contentType = "application/octet-stream";
-        String headerValue = "attachment; filename=\"" + resource.getFilename() + "\"";
-
+        InputStreamResource resource = new InputStreamResource(new ByteArrayInputStream(dataContainer.get()));
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, headerValue)
+                .contentType(contentType)
                 .body(resource);
     }
 
     @DeleteMapping("/resumes/{resumeId}")
     public ResponseEntity<Void> deleteResume(@PathVariable Integer resumeId) {
+        resumeService.deleteResume(resumeId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

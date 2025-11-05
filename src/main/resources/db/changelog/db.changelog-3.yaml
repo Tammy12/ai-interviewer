@@ -1,5 +1,5 @@
 databaseChangeLog:
-  - changeset:
+  - changeSet:
       id: create-table-message
       author: tammy-xu
       changes:
