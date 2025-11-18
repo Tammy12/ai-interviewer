@@ -15,13 +15,13 @@ databaseChangeLog:
                     primaryKey: true
                     primaryKeyName: message_pkey
               - column:
-                  name: mock_interview_id
+                  name: interview_id
                   type: INTEGER
                   constraints:
                     nullable: false
-                    foreignKeyName: fk_message_mock_interview
+                    foreignKeyName: fk_message_interview
                     deleteCascade: true
-                    referencedTableName: mock_interview
+                    referencedTableName: interview
                     referencedColumnNames: id
               - column:
                   name: instructions

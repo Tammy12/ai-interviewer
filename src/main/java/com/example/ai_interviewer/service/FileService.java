@@ -49,13 +49,13 @@ public class FileService {
                 .build();
     }
 
-    public void uploadFile(MultipartFile multipartFile, String path) throws S3UploadException {
+    public void uploadFile(MultipartFile multipartFile, String folder) throws S3UploadException {
         try {
             Map<String, String> metadata = new HashMap<>();
             metadata.put("content_type", multipartFile.getContentType());
             PutObjectRequest objectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
-                    .key(path + "/" + multipartFile.getOriginalFilename())
+                    .key(folder + "/" + multipartFile.getOriginalFilename())
                     .metadata(metadata)
                     .build();
 

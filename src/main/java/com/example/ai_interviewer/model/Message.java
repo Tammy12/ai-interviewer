@@ -11,8 +11,8 @@ public class Message {
     @Id
     @Column(name = "id")
     private Integer id;
-    @Column(name = "mock_interview_id")
-    private Integer mockInterviewId;
+    @Column(name = "interview_id")
+    private Integer interviewId;
     @Column(name = "instructions")
     private String instructions;
     @Column(name = "input")

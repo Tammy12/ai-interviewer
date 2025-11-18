@@ -1,10 +1,10 @@
 databaseChangeLog:
   - changeSet:
-      id: create-table-mock-interview
+      id: create-table-interview
       author: tammy-xu
       changes:
         - createTable:
-            tableName: mock_interview
+            tableName: interview
             columns:
               - column:
                   name: id
@@ -13,13 +13,13 @@ databaseChangeLog:
                   constraints:
                     nullable: false
                     primaryKey: true
-                    primaryKeyName: mock_interview_pkey
+                    primaryKeyName: interview_pkey
               - column:
                   name: resume_id
                   type: INTEGER
                   constraints:
                     nullable: false
-                    foreignKeyName: fk_mock_interview_resume
+                    foreignKeyName: fk_interview_resume
                     deleteCascade: true
                     referencedTableName: resume
                     referencedColumnNames: id

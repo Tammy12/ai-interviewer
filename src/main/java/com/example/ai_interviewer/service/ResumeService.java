@@ -26,7 +26,9 @@ public class ResumeService {
             .fileName(file.getOriginalFilename())
             .build();
 
-        Resume resume = resumeRepository.save(resumeTranslator.DtoToEntity(resumeDto));
+        Resume resumeEntity = resumeTranslator.DtoToEntity(resumeDto);
+
+        Resume resume = resumeRepository.save(resumeEntity);
         try {
             fileService.uploadFile(file, resume.getId().toString());
         } catch (S3UploadException e) {
