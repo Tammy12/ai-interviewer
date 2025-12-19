@@ -6,14 +6,14 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ResumeTranslator {
-    public Resume DtoToEntity(ResumeDto dto) {
+    public Resume dtoToEntity(ResumeDto dto) {
         return Resume.builder()
                 .id(dto.getId())
                 .fileName(dto.getFileName())
                 .build();
     }
 
-    public ResumeDto EntityToDto(Resume entity) {
+    public ResumeDto entityToDto(Resume entity) {
         return ResumeDto.builder()
                 .id(entity.getId())
                 .fileName(entity.getFileName())

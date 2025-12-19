@@ -1,13 +1,18 @@
 package com.example.ai_interviewer.controller;
 
+import com.example.ai_interviewer.client.openai.exception.OpenAIFileUploadException;
+import com.example.ai_interviewer.client.openai.exception.OpenAIResponsesException;
+import com.example.ai_interviewer.client.openai.model.Role;
 import com.example.ai_interviewer.dto.MessageDto;
 import com.example.ai_interviewer.dto.InterviewDto;
 import com.example.ai_interviewer.dto.ResumeDto;
 import com.example.ai_interviewer.exception.InterviewNotFoundException;
 import com.example.ai_interviewer.exception.ResumeNotFoundException;
 import com.example.ai_interviewer.exception.S3UploadException;
-import com.example.ai_interviewer.model.Stage;
+import com.example.ai_interviewer.exception.UnauthorizedException;
+import com.example.ai_interviewer.model.Message;
 import com.example.ai_interviewer.service.InterviewService;
+import com.example.ai_interviewer.service.MessageService;
 import com.example.ai_interviewer.service.ResumeService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,14 +36,15 @@ public class ResumeController {
 
     private ResumeService resumeService;
     private InterviewService interviewService;
+    private MessageService messageService;
 
     @PostMapping("/resumes")
     public ResponseEntity<ResumeDto> createResume(@RequestParam("file") MultipartFile file) {
         try {
-            ResumeDto resume = resumeService.createResume(file);
             if (!file.getContentType().equals("application/pdf")) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only PDF files are allowed.");
             }
+            ResumeDto resume = resumeService.createResume(file);
             return new ResponseEntity<>(resume, HttpStatus.OK);
         } catch (S3UploadException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error uploading file.");
@@ -55,7 +61,7 @@ public class ResumeController {
     @ResponseBody
     public ResponseEntity<InputStreamResource> getResume(@PathVariable Integer resumeId) {
         MediaType contentType = MediaType.APPLICATION_PDF;
-        Optional<byte[]> dataContainer = resumeService.getResume(resumeId);
+        Optional<byte[]> dataContainer = resumeService.getResumeBytes(resumeId);
         if (dataContainer.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found");
         }
@@ -84,6 +90,7 @@ public class ResumeController {
 
     @GetMapping("/resumes/{resumeId}/interviews")
     public ResponseEntity<List<InterviewDto>> getAllInterviews(@PathVariable Integer resumeId) {
+        // COMMENT: this should probably throw not found if the resume doesn't exist
         List<InterviewDto> interviews = interviewService.getAllInterviews(resumeId);
         return new ResponseEntity<>(interviews, HttpStatus.OK);
     }
@@ -100,7 +107,7 @@ public class ResumeController {
     @PatchMapping("/resumes/{resumeId}/interviews/{interviewId}")
     public ResponseEntity<InterviewDto> updateInterview(@PathVariable Integer resumeId, @PathVariable Integer interviewId, @RequestBody InterviewDto interviewDto) {
         try {
-            InterviewDto updated = interviewService.updateInterview(resumeId, interviewId, interviewDto);
+            InterviewDto updated = interviewService.updateInterviewJobDescription(resumeId, interviewId, interviewDto);
             return new ResponseEntity<>(updated, HttpStatus.OK);
         } catch (InterviewNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
@@ -115,15 +122,30 @@ public class ResumeController {
 
     @PostMapping("/resumes/{resumeId}/interviews/{interviewId}/messages")
     public ResponseEntity<MessageDto> addMessage(@PathVariable Integer resumeId, @PathVariable Integer interviewId, @RequestBody MessageDto messageDto) {
-        MessageDto message = MessageDto.builder()
-                .id(1)
-                .input(messageDto.getInput())
-                .build();
-        return new ResponseEntity<>(message, HttpStatus.OK);
+        messageDto.setRole(Role.user.name());
+        try {
+            MessageDto response = messageService.processUserMessage(resumeId, interviewId, messageDto);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (InterviewNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+        } catch (UnauthorizedException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.getMessage(), e);
+        } catch (OpenAIFileUploadException | OpenAIResponsesException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+        }
     }
 
     @GetMapping("/resumes/{resumeId}/interviews/{interviewId}/messages")
     public ResponseEntity<List<MessageDto>> getMessages(@PathVariable Integer resumeId, @PathVariable Integer interviewId) {
-        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
+        List<Message> allMessages = messageService.getAllMessages(interviewId);
+        List<MessageDto> allMessageDtos = new ArrayList<>();
+        for (Message message : allMessages) {
+            allMessageDtos.add(
+                    MessageDto.builder()
+                            .role(message.getRole())
+                            .input(message.getContent())
+                            .build());
+        }
+        return new ResponseEntity<>(allMessageDtos, HttpStatus.OK);
     }
 }

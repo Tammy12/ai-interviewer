@@ -18,14 +18,14 @@ import java.util.Map;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-public class FileServiceTests {
+public class S3FileServiceTests {
     private String bucketName;
     @Mock
     private S3Client s3Client;
     @InjectMocks
-    private FileService fileService;
+    private S3FileService s3FileService;
 
-    public FileServiceTests(@Value("${aws.s3.bucketName}") String bucketName) {
+    public S3FileServiceTests(@Value("${aws.s3.bucketName}") String bucketName) {
         this.bucketName = bucketName;
     }
 
@@ -47,7 +47,7 @@ public class FileServiceTests {
                 .build();
         RequestBody expectedRequestBody = RequestBody.fromBytes(fileData);
         // act
-        fileService.uploadFile(file, folderName);
+        s3FileService.uploadFile(file, folderName);
 
         // assert
         verify(s3Client).putObject(expectedObjectRequest, expectedRequestBody);

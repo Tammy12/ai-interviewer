@@ -4,5 +4,12 @@ public enum Stage {
     PROJECTS,
     TECH,
     TEAM,
-    COMPANY
+    COMPANY,
+    END;
+
+    private static final Stage[] vals = values();
+
+    public Stage next() {
+        return vals[(this.ordinal() + 1) % vals.length];
+    }
 }

@@ -17,7 +17,7 @@ import java.util.Optional;
 @AllArgsConstructor
 public class ResumeService {
 
-    private FileService fileService;
+    private S3FileService s3FileService;
     private ResumeRepository resumeRepository;
     private ResumeTranslator resumeTranslator;
 
@@ -26,35 +26,40 @@ public class ResumeService {
             .fileName(file.getOriginalFilename())
             .build();
 
-        Resume resumeEntity = resumeTranslator.DtoToEntity(resumeDto);
+        Resume resumeEntity = resumeTranslator.dtoToEntity(resumeDto);
 
         Resume resume = resumeRepository.save(resumeEntity);
         try {
-            fileService.uploadFile(file, resume.getId().toString());
+            s3FileService.uploadFile(file, resume.getId().toString());
         } catch (S3UploadException e) {
             resumeRepository.delete(resume);
             throw e;
         }
 
-        return resumeTranslator.EntityToDto(resume);
+        return resumeTranslator.entityToDto(resume);
     }
 
     public List<ResumeDto> getAllResumes() {
         List<Resume> resumes = resumeRepository.findAll();
         List<ResumeDto> dtos = new ArrayList<>();
         for (Resume resume : resumes) {
-            dtos.add(resumeTranslator.EntityToDto(resume));
+            dtos.add(resumeTranslator.entityToDto(resume));
         }
         return dtos;
     }
 
-    public Optional<byte[]> getResume(Integer resumeId) {
+    public Optional<ResumeDto> getResume(Integer id) {
+        return resumeRepository.findById(id)
+                .map(resume -> resumeTranslator.entityToDto(resume));
+    }
+
+    public Optional<byte[]> getResumeBytes(Integer resumeId) {
         Optional<Resume> resumeOptional = resumeRepository.findById(resumeId);
         if (resumeOptional.isEmpty()) {
             return Optional.empty();
         }
 
-        byte[] resumeData =  fileService.retrieveFile(resumeOptional.get().getId().toString(), resumeOptional.get().getFileName());
+        byte[] resumeData =  s3FileService.retrieveFile(resumeOptional.get().getId().toString(), resumeOptional.get().getFileName());
         return Optional.of(resumeData);
     }
 
@@ -64,7 +69,7 @@ public class ResumeService {
             return;
         }
 
-        fileService.deleteFile(resumeOptional.get().getId().toString(), resumeOptional.get().getFileName());
+        s3FileService.deleteFile(resumeOptional.get().getId().toString(), resumeOptional.get().getFileName());
         resumeRepository.delete(resumeOptional.get());
     }
 }

@@ -1,15 +1,12 @@
 package com.example.ai_interviewer.service;
 
-import com.example.ai_interviewer.dto.ResumeDto;
 import com.example.ai_interviewer.exception.S3UploadException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.*;
@@ -18,14 +15,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.model.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
 @Service
-public class FileService {
+public class S3FileService {
     @Value("${aws.s3.bucketName}")
     private String bucketName;
 
@@ -39,6 +35,7 @@ public class FileService {
 
     @PostConstruct
     private void initialize() {
+        // COMMENT: move S3Client to an S3Config class. Use method injection for the configuration values
         AwsBasicCredentials awsBasicCredentials = AwsBasicCredentials.builder()
                 .accessKeyId(accessKey)
                 .secretAccessKey(secretKey)
@@ -63,7 +60,7 @@ public class FileService {
 
            PutObjectResponse response = s3Client.putObject(objectRequest, requestBody);
         } catch (S3Exception | IOException e) {
-            throw new S3UploadException(e.getMessage());
+            throw new S3UploadException(e);
         }
     }
 
@@ -72,7 +69,7 @@ public class FileService {
                 .bucket(bucketName)
                 .key(folderName + "/" + fileName)
                 .build();
-
+        // COMMENT: you should catch potential exceptions from S3 in all these cases
         ResponseBytes<GetObjectResponse> response = s3Client.getObjectAsBytes(getObjectRequest);
         return response.asByteArray();
     }
@@ -82,6 +79,7 @@ public class FileService {
                 .bucket(bucketName)
                 .key(folderName + "/" + fileName)
                 .build();
+        // COMMENT: you should catch potential exceptions from S3 in all these cases
         s3Client.deleteObject(deleteObjectRequest);
     }
 }

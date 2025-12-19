@@ -7,7 +7,7 @@ databaseChangeLog:
             tableName: message
             columns:
               - column:
-                  name: id
+                  name: message_id
                   type: INTEGER
                   autoIncrement: true
                   constraints:
@@ -19,13 +19,15 @@ databaseChangeLog:
                   type: INTEGER
                   constraints:
                     nullable: false
+                    primaryKey: true
+                    primaryKeyName: message_pkey
                     foreignKeyName: fk_message_interview
                     deleteCascade: true
                     referencedTableName: interview
                     referencedColumnNames: id
               - column:
-                  name: instructions
+                  name: role
                   type: VARCHAR
               - column:
-                  name: input
+                  name: content
                   type: VARCHAR

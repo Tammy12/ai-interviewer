@@ -15,3 +15,5 @@ spring:
 aws:
   s3:
     bucketName: ai-interviewer-bucket-8512-6856-6386
+openai:
+  baseUrl: https://api.openai.com/v1

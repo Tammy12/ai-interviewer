@@ -6,7 +6,6 @@ import com.example.ai_interviewer.dto.ResumeDto;
 import com.example.ai_interviewer.exception.InterviewNotFoundException;
 import com.example.ai_interviewer.exception.ResumeNotFoundException;
 import com.example.ai_interviewer.exception.S3UploadException;
-import com.example.ai_interviewer.model.Interview;
 import com.example.ai_interviewer.model.Stage;
 import com.example.ai_interviewer.service.InterviewService;
 import com.example.ai_interviewer.service.ResumeService;
@@ -109,7 +108,7 @@ public class ResumeControllerTests {
         File file = new File(filePath);
         byte[] fileContent = Files.readAllBytes(file.toPath());
 
-        when(resumeService.getResume(id)).thenReturn(Optional.of(fileContent));
+        when(resumeService.getResumeBytes(id)).thenReturn(Optional.of(fileContent));
 
         InputStreamResource expected = new InputStreamResource(new ByteArrayInputStream(fileContent));
 
@@ -120,14 +119,14 @@ public class ResumeControllerTests {
         // assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 //        assertThat(response.getBody()).isEqualTo(expected); // question: how to compare??
-        verify(resumeService).getResume(id);
+        verify(resumeService).getResumeBytes(id);
     }
 
     @Test
     public void testGetResume_resumeNotFound_statusNotFound() {
         // arrange
         Integer id = 6;
-        when(resumeService.getResume(id)).thenReturn(Optional.empty());
+        when(resumeService.getResumeBytes(id)).thenReturn(Optional.empty());
 
         // act
         URI url = UriComponentsBuilder.fromPath("/resumes/{resumeId}").build(Map.of("resumeId", id));
@@ -135,7 +134,7 @@ public class ResumeControllerTests {
 
         // assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        verify(resumeService).getResume(id);
+        verify(resumeService).getResumeBytes(id);
     }
 
     @Test
@@ -292,7 +291,7 @@ public class ResumeControllerTests {
                 .stage(Stage.TEAM)
                 .build();
 
-        when(interviewService.updateInterview(resumeId, interviewId, dto)).thenReturn(expected);
+        when(interviewService.updateInterviewJobDescription(resumeId, interviewId, dto)).thenReturn(expected);
 
         // act
         URI url = UriComponentsBuilder.fromPath("/resumes/{resumeId}/interviews/{interviewId}").build(Map.of("resumeId", resumeId, "interviewId", interviewId));
@@ -313,7 +312,7 @@ public class ResumeControllerTests {
         InterviewDto dto = InterviewDto.builder()
                 .jobDescription("This is for the glory.")
                 .build();
-        when(interviewService.updateInterview(resumeId, interviewId, dto)).thenThrow(InterviewNotFoundException.class);
+        when(interviewService.updateInterviewJobDescription(resumeId, interviewId, dto)).thenThrow(InterviewNotFoundException.class);
 
         // act
         URI url = UriComponentsBuilder.fromPath("/resumes/{resumeId}/interviews/{interviewId}").build(Map.of("resumeId", resumeId, "interviewId", interviewId));
@@ -321,7 +320,7 @@ public class ResumeControllerTests {
 
         // assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        verify(interviewService).updateInterview(resumeId, interviewId, dto);
+        verify(interviewService).updateInterviewJobDescription(resumeId, interviewId, dto);
     }
 
     @Test
@@ -345,7 +344,6 @@ public class ResumeControllerTests {
                 "input", "hello"
         );
         MessageDto expected = MessageDto.builder()
-                .id(1)
                 .input("hello")
                 .build();
         URI url = UriComponentsBuilder.fromPath("/resumes/{resumeId}/interviews/{interviewId}/messages").build(Map.of("resumeId", 1, "interviewId", 12));

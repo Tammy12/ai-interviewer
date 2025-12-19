@@ -7,7 +7,6 @@ import com.example.ai_interviewer.repository.ResumeRepository;
 import com.example.ai_interviewer.translator.ResumeTranslator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.HexFormat;
@@ -20,17 +19,17 @@ import static org.mockito.Mockito.*;
 
 // question: why not @ExtendWith(MockitoExtension.class)?
 public class ResumeServiceTests {
-    private FileService fileService;
+    private S3FileService s3FileService;
     private ResumeRepository resumeRepository;
     private ResumeTranslator resumeTranslator;
     private ResumeService resumeService;
 
     @BeforeEach
     public void BeforeEach() {
-        fileService = mock(FileService.class);
+        s3FileService = mock(S3FileService.class);
         resumeRepository = mock(ResumeRepository.class);
         resumeTranslator = new ResumeTranslator();
-        resumeService = new ResumeService(fileService, resumeRepository, resumeTranslator);
+        resumeService = new ResumeService(s3FileService, resumeRepository, resumeTranslator);
     }
 
     @Test
@@ -54,7 +53,7 @@ public class ResumeServiceTests {
         // assert
         assertThat(result).isEqualTo(expected);
         verify(resumeRepository).save(resume);
-        verify(fileService).uploadFile(file, "6");
+        verify(s3FileService).uploadFile(file, "6");
         verify(resumeRepository, never()).delete(any());
     }
 
@@ -69,7 +68,7 @@ public class ResumeServiceTests {
         when(resumeRepository.save(resume)).thenReturn(savedResume);
         MockMultipartFile file = new MockMultipartFile(fileName, fileName, "application/pdf", "data is here!".getBytes());
         doThrow(new S3UploadException("This is wrong!"))
-                .when(fileService)
+                .when(s3FileService)
                 .uploadFile(file, savedResume.getId().toString());
 
         // assert
@@ -99,7 +98,7 @@ public class ResumeServiceTests {
     }
 
     @Test
-    public void testGetResume() {
+    public void testGetResumeBytes() {
         // arrange
         Integer id = 12;
         String fileName = "mytestfilename";
@@ -109,30 +108,30 @@ public class ResumeServiceTests {
                 .build();
         when(resumeRepository.findById(id)).thenReturn(Optional.of(resume));
         byte[] bytes = HexFormat.of().parseHex("3a0f45db");
-        when(fileService.retrieveFile(id.toString(), fileName)).thenReturn(bytes);
+        when(s3FileService.retrieveFile(id.toString(), fileName)).thenReturn(bytes);
 
         // act
-        Optional<byte[]> result = resumeService.getResume(id);
+        Optional<byte[]> result = resumeService.getResumeBytes(id);
 
         // assert
         verify(resumeRepository).findById(id);
-        verify(fileService).retrieveFile(id.toString(), fileName);
+        verify(s3FileService).retrieveFile(id.toString(), fileName);
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(bytes);
     }
 
     @Test
-    public void testGetResume_resumeIdNotFound_returnsEmptyOptional() {
+    public void testGetResumeBytes_resumeIdNotFound_returnsEmptyOptional() {
         // arrange
         Integer id = 17;
         when(resumeRepository.findById(id)).thenReturn(Optional.empty());
 
         // act
-        Optional<byte[]> result = resumeService.getResume(id);
+        Optional<byte[]> result = resumeService.getResumeBytes(id);
 
         // assert
         verify(resumeRepository).findById(id);
-        verify(fileService, never()).retrieveFile(any(), any());
+        verify(s3FileService, never()).retrieveFile(any(), any());
         assertThat(result).isNotPresent();
     }
 
@@ -152,7 +151,7 @@ public class ResumeServiceTests {
 
         // assert
         verify(resumeRepository).findById(id);
-        verify(fileService).deleteFile(id.toString(), fileName);
+        verify(s3FileService).deleteFile(id.toString(), fileName);
         verify(resumeRepository).delete(resume);
     }
 
@@ -166,7 +165,7 @@ public class ResumeServiceTests {
         resumeService.deleteResume(id);
 
         // assert
-        verifyNoInteractions(fileService);
+        verifyNoInteractions(s3FileService);
         verify(resumeRepository).findById(id);
         verifyNoMoreInteractions(resumeRepository);
     }

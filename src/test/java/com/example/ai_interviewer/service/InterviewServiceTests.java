@@ -9,10 +9,8 @@ import com.example.ai_interviewer.model.Stage;
 import com.example.ai_interviewer.repository.InterviewRepository;
 import com.example.ai_interviewer.repository.ResumeRepository;
 import com.example.ai_interviewer.translator.InterviewTranslator;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 
 import java.util.List;
 import java.util.Optional;
@@ -162,7 +160,7 @@ public class InterviewServiceTests {
     }
 
     @Test
-    public void testUpdateInterview() throws InterviewNotFoundException {
+    public void testUpdateInterviewJobDescription() throws InterviewNotFoundException {
         // arrange
         Integer resumeId = 16;
         Integer interviewId = 67;
@@ -188,7 +186,7 @@ public class InterviewServiceTests {
         when(interviewRepository.save(toSave)).thenReturn(toSave);
 
         // act
-        InterviewDto result = interviewService.updateInterview(resumeId, interviewId, dto);
+        InterviewDto result = interviewService.updateInterviewJobDescription(resumeId, interviewId, dto);
 
         // assert
         verify(interviewRepository).findByResumeIdAndId(resumeId, interviewId);
@@ -197,7 +195,7 @@ public class InterviewServiceTests {
     }
 
     @Test
-    public void testUpdateInterview_interviewNotFound_throws() throws InterviewNotFoundException {
+    public void testUpdateInterviewJobDescription_interviewNotFound_throws() throws InterviewNotFoundException {
         // arrange
         Integer resumeId = 13;
         Integer interviewId = 37;
@@ -207,7 +205,7 @@ public class InterviewServiceTests {
         when(interviewRepository.findByResumeIdAndId(resumeId, interviewId)).thenReturn(Optional.empty());
 
         // assert
-        assertThatThrownBy(() -> interviewService.updateInterview(resumeId, interviewId, dto)).isInstanceOf(InterviewNotFoundException.class);
+        assertThatThrownBy(() -> interviewService.updateInterviewJobDescription(resumeId, interviewId, dto)).isInstanceOf(InterviewNotFoundException.class);
         verify(interviewRepository).findByResumeIdAndId(resumeId, interviewId);
         verifyNoMoreInteractions(interviewRepository);
     }
