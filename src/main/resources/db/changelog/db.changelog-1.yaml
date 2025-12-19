@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-resume
+      author: tammy-xu
+      changes:
+        - createTable:
+            tableName: resume
+            columns:
+              - column:
+                  name: id
+                  type: INTEGER
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: resume_pkey
+              - column:
+                  name: file_name
+                  type: VARCHAR
+                  constraints:
+                    nullable: false
+#              - column:
+#                  name: data
+#                  type: BYTEA
+#                  constraints:
+#                    nullable: false

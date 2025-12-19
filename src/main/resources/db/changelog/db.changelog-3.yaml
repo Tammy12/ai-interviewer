@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-message
+      author: tammy-xu
+      changes:
+        - createTable:
+            tableName: message
+            columns:
+              - column:
+                  name: message_id
+                  type: INTEGER
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: message_pkey
+              - column:
+                  name: interview_id
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: message_pkey
+                    foreignKeyName: fk_message_interview
+                    deleteCascade: true
+                    referencedTableName: interview
+                    referencedColumnNames: id
+              - column:
+                  name: role
+                  type: VARCHAR
+              - column:
+                  name: content
+                  type: VARCHAR
